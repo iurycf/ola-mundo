@@ -6,6 +6,7 @@ import AudioToolbox
 struct ContentView: View {
     @Environment(\.colorScheme) private var esquema
     @State private var mostrarMensagem = false
+    @State private var toques = 0
     @State private var ondas: [Onda] = []
     @State private var respirando = false
 
@@ -37,7 +38,6 @@ struct ContentView: View {
                 Spacer()
 
                 mensagem
-                    .frame(height: 96)
                     .padding(.bottom, 40)
             }
             .padding(.horizontal, 24)
@@ -79,27 +79,33 @@ struct ContentView: View {
         .accessibilityIdentifier("botaoTocar")
     }
 
-    @ViewBuilder
+    /// O espaço da mensagem fica sempre reservado, para o botão não mudar de lugar quando ela aparece.
     private var mensagem: some View {
-        if mostrarMensagem {
-            Text("Olá mundo 👋")
-                .font(.system(size: 30, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 32)
-                .padding(.vertical, 18)
-                .background(Capsule().fill(.white.opacity(0.18)))
-                .overlay(Capsule().stroke(.white.opacity(0.4), lineWidth: 1))
-                .transition(.scale(scale: 0.6).combined(with: .opacity))
-                .accessibilityIdentifier("mensagemOlaMundo")
+        ZStack {
+            if mostrarMensagem {
+                Text("Olá mundo 👋")
+                    .font(.system(size: 30, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 32)
+                    .padding(.vertical, 18)
+                    .background(Capsule().fill(.white.opacity(0.18)))
+                    .overlay(Capsule().stroke(.white.opacity(0.4), lineWidth: 1))
+                    .transition(.scale(scale: 0.6).combined(with: .opacity))
+                    .accessibilityIdentifier("mensagemOlaMundo")
+                    .id(toques)
+            }
         }
+        .frame(height: 96)
     }
 
     private func tocar() {
         UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
         AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
 
+        // Mudar o "toques" recria a mensagem, então ela pula de novo a cada toque.
         withAnimation(.spring(response: 0.45, dampingFraction: 0.6)) {
             mostrarMensagem = true
+            toques += 1
         }
 
         let novas = [0.0, 0.2, 0.4].map { Onda(atraso: $0) }
