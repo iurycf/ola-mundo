@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Baixar o código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Versão do Xcode
         run: xcodebuild -version
@@ -43,7 +43,7 @@ jobs:
           zip -qry OlaMundo.ipa Payload
 
       - name: Guardar o app pronto
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: OlaMundo-ipa
           path: OlaMundo.ipa
