@@ -1,0 +1,114 @@
+name: Testar no simulador
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  testar:
+    runs-on: macos-26
+    timeout-minutes: 40
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v7
+
+      - name: Instalar o XcodeGen
+        run: brew install xcodegen
+
+      - name: Gerar o projeto do Xcode
+        run: xcodegen generate
+
+      - name: Preparar um simulador de iPhone 11
+        id: simulador
+        run: |
+          RUNTIME=$(xcrun simctl list runtimes --json | python3 -c '
+          import json, sys
+          rs = [r for r in json.load(sys.stdin)["runtimes"] if r["platform"] == "iOS" and r["isAvailable"]]
+          rs.sort(key=lambda r: [int(x) for x in r["version"].split(".")])
+          print(rs[-1]["identifier"])')
+          echo "Sistema do simulador: $RUNTIME"
+          UDID=$(xcrun simctl create "iPhone 11 (teste)" com.apple.CoreSimulator.SimDeviceType.iPhone-11 "$RUNTIME" 2>/dev/null) \
+            || UDID=$(xcrun simctl create "iPhone 16 (teste)" com.apple.CoreSimulator.SimDeviceType.iPhone-16 "$RUNTIME")
+          xcrun simctl list devices | grep "$UDID"
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl status_bar "$UDID" override --time "9:41" --dataNetwork wifi --wifiMode active --wifiBars 3 \
+            --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100
+
+      - name: Compilar para o simulador
+        run: |
+          xcodebuild build-for-testing \
+            -project OlaMundo.xcodeproj \
+            -scheme OlaMundo \
+            -destination "id=${{ steps.simulador.outputs.udid }}" \
+            -derivedDataPath build-sim \
+            -quiet
+
+      - name: Testar no modo claro (com vídeo)
+        run: |
+          UDID="${{ steps.simulador.outputs.udid }}"
+          mkdir -p capturas
+          xcrun simctl ui "$UDID" appearance light
+          xcrun simctl io "$UDID" recordVideo --codec=h264 --force capturas/video-modo-claro.mp4 &
+          GRAVADOR=$!
+          sleep 2
+          set +e
+          xcodebuild test-without-building \
+            -project OlaMundo.xcodeproj \
+            -scheme OlaMundo \
+            -destination "id=$UDID" \
+            -derivedDataPath build-sim \
+            -resultBundlePath resultados/claro.xcresult \
+            -parallel-testing-enabled NO
+          RESULTADO=$?
+          kill -INT $GRAVADOR
+          wait $GRAVADOR
+          exit $RESULTADO
+
+      - name: Testar no modo escuro
+        run: |
+          UDID="${{ steps.simulador.outputs.udid }}"
+          xcrun simctl ui "$UDID" appearance dark
+          xcodebuild test-without-building \
+            -project OlaMundo.xcodeproj \
+            -scheme OlaMundo \
+            -destination "id=$UDID" \
+            -derivedDataPath build-sim \
+            -resultBundlePath resultados/escuro.xcresult \
+            -parallel-testing-enabled NO
+
+      - name: Separar as capturas de tela
+        if: always()
+        run: |
+          for modo in claro escuro; do
+            if [ -d "resultados/$modo.xcresult" ]; then
+              mkdir -p "capturas/$modo"
+              xcrun xcresulttool export attachments --path "resultados/$modo.xcresult" --output-path "capturas/$modo"
+            fi
+          done
+          python3 - <<'EOF'
+          import json, os, shutil
+          for modo in ("claro", "escuro"):
+              pasta = os.path.join("capturas", modo)
+              manifesto = os.path.join(pasta, "manifest.json")
+              if not os.path.exists(manifesto):
+                  continue
+              for teste in json.load(open(manifesto)):
+                  for anexo in teste.get("attachments", []):
+                      origem = os.path.join(pasta, anexo.get("exportedFileName", ""))
+                      nome = (anexo.get("suggestedHumanReadableName") or "").split("_")[0]
+                      if nome and os.path.isfile(origem):
+                          shutil.move(origem, os.path.join(pasta, nome + os.path.splitext(origem)[1]))
+          EOF
+          find capturas -type f | sort
+
+      - name: Guardar as capturas e o vídeo
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: capturas-de-tela
+          path: capturas
+          if-no-files-found: warn
+          retention-days: 30

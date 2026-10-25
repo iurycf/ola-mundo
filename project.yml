@@ -31,4 +31,18 @@ targets:
           UIApplicationSupportsMultipleScenes: false
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
-    scheme: {}
+    scheme:
+      testTargets:
+        - OlaMundoUITests
+  OlaMundoUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: OlaMundoUITests
+    dependencies:
+      - target: OlaMundo
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: br.app.olamundo.r4k8tz.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TARGETED_DEVICE_FAMILY: "1"

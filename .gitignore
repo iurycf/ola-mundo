@@ -5,8 +5,11 @@ Payload/
 *.ipa
 OlaMundo/Info.plist
 
-# App baixado para instalar no iPhone
+# App baixado para instalar no iPhone e resultados dos testes
 app-pronto/
+capturas/
+resultados/
+build-sim/
 
 # Configurações e skills locais
 .claude/settings.local.json

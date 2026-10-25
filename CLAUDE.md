@@ -12,10 +12,16 @@ Um botão que, ao ser tocado, toca o som escolhido pelo usuário, vibra e mostra
 ## Como o app é montado (não há Mac)
 1. Cada `git push` na branch `main` dispara `.github/workflows/montar-app.yml`: um Mac do GitHub (`macos-26`, Xcode 26) gera o projeto com XcodeGen a partir do `project.yml` e monta o app **sem assinatura**.
 2. O app fica como artefato `OlaMundo-ipa`. Para baixar: `gh run download --name OlaMundo-ipa --dir app-pronto`.
-3. A instalação no iPhone é pelo cabo, assinando com o Apple ID grátis do usuário. Ferramenta: a confirmar (recomendado: plumesign, do Impactor; alternativa: Sideloadly).
+3. Quando o app estiver pronto, o próprio usuário instala no iPhone pelo cabo, com o Apple ID grátis (Sideloadly ou Impactor).
 
 - `*.xcodeproj` e `OlaMundo/Info.plist` são gerados na montagem: altere o `project.yml`.
 - Swift para iOS não compila no Windows, então cada teste depende de uma montagem no GitHub (cerca de 10 min). Junte as mudanças e revise o código com cuidado antes de enviar. Se a montagem falhar, veja o erro com `gh run view --log-failed`.
+
+## Laboratório de testes (simulador na nuvem)
+- `.github/workflows/testar-no-simulador.yml` roda a cada push: cria um simulador de iPhone 11 num Mac do GitHub, roda os testes de interface (`OlaMundoUITests`) nos modos claro e escuro e guarda fotos da tela e um vídeo no artefato `capturas-de-tela`.
+- Para analisar: `gh run download <id> --name capturas-de-tela --dir capturas` e abra as imagens. Revise o visual pelas fotos antes de entregar.
+- Nos testes, o app recebe `-modoTeste`, que desliga as animações contínuas (senão o simulador não "para" para fotografar).
+- O simulador não vibra nem toca som de verdade: vibração, som e modo silencioso só se confirmam no iPhone.
 
 ## Fases
 | Fase | Pronto quando |
