@@ -1,0 +1,34 @@
+name: OlaMundo
+options:
+  bundleIdPrefix: br.app.olamundo
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1"
+targets:
+  OlaMundo:
+    type: application
+    platform: iOS
+    sources:
+      - path: OlaMundo
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: br.app.olamundo.r4k8tz
+        PRODUCT_NAME: OlaMundo
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    info:
+      path: OlaMundo/Info.plist
+      properties:
+        CFBundleDisplayName: Olá Mundo
+        LSRequiresIPhoneOS: true
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+    scheme: {}

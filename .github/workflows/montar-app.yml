@@ -1,0 +1,51 @@
+name: Montar app do iPhone
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  montar:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Versão do Xcode
+        run: xcodebuild -version
+
+      - name: Instalar o XcodeGen
+        run: brew install xcodegen
+
+      - name: Gerar o projeto do Xcode
+        run: xcodegen generate
+
+      - name: Montar o app (sem assinatura)
+        run: |
+          xcodebuild \
+            -project OlaMundo.xcodeproj \
+            -scheme OlaMundo \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Empacotar o arquivo .ipa
+        run: |
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/OlaMundo.app Payload/
+          zip -qry OlaMundo.ipa Payload
+
+      - name: Guardar o app pronto
+        uses: actions/upload-artifact@v4
+        with:
+          name: OlaMundo-ipa
+          path: OlaMundo.ipa
+          if-no-files-found: error
+          retention-days: 30

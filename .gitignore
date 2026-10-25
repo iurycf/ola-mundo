@@ -1,0 +1,14 @@
+# Gerados na montagem
+*.xcodeproj/
+build/
+Payload/
+*.ipa
+OlaMundo/Info.plist
+
+# App baixado para instalar no iPhone
+app-pronto/
+
+# Configurações e skills locais
+.claude/settings.local.json
+.claude/skills/
+.DS_Store
