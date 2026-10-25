@@ -49,3 +49,26 @@ jobs:
           path: OlaMundo.ipa
           if-no-files-found: error
           retention-days: 30
+
+      - name: Montar a versão para simulador (Appetize)
+        run: |
+          xcodebuild \
+            -project OlaMundo.xcodeproj \
+            -scheme OlaMundo \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build-sim \
+            ONLY_ACTIVE_ARCH=NO \
+            build
+          cd build-sim/Build/Products/Release-iphonesimulator
+          lipo -info OlaMundo.app/OlaMundo
+          zip -qry "$GITHUB_WORKSPACE/OlaMundo-simulador.zip" OlaMundo.app
+
+      - name: Guardar a versão para simulador
+        uses: actions/upload-artifact@v7
+        with:
+          name: OlaMundo-simulador
+          path: OlaMundo-simulador.zip
+          if-no-files-found: error
+          retention-days: 30
